@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Українські літери</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          background-color: #f0f8ff;
+          margin: 0;
+          padding: 20px;
+          min-height: 100vh;
+      }
+      
+      .controls {
+          position: fixed;
+          top: 20px;
+          left: 20px;
+          right: 20px;
+          background-color: white;
+          padding: 15px;
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          z-index: 1000;
+          flex-wrap: wrap;
+      }
+      
+      .mode-control {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+      }
+      
+      .mode-toggle {
+          display: flex;
+          background-color: #f0f0f0;
+          border-radius: 6px;
+          overflow: hidden;
+      }
+      
+      .mode-btn {
+          padding: 8px 16px;
+          background-color: transparent;
+          border: none;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background-color 0.3s;
+      }
+      
+      .mode-btn.active {
+          background-color: #4a90e2;
+          color: white;
+      }
+      
+      .mode-btn:hover:not(.active) {
+          background-color: #e0e0e0;
+      }
+      
+      .speed-control {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+      }
+      
+      .speed-slider {
+          width: 200px;
+          height: 6px;
+          border-radius: 3px;
+          background: #ddd;
+          outline: none;
+          -webkit-appearance: none;
+      }
+      
+      .speed-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #4a90e2;
+          cursor: pointer;
+      }
+      
+      .speed-slider::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #4a90e2;
+          cursor: pointer;
+          border: none;
+      }
+      
+      .play-pause-btn {
+          padding: 10px 20px;
+          background-color: #27ae60;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+          min-width: 80px;
+      }
+      
+      .play-pause-btn:hover {
+          background-color: #229954;
+      }
+      
+      .play-pause-btn.paused {
+          background-color: #e74c3c;
+      }
+      
+      .play-pause-btn.paused:hover {
+          background-color: #c0392b;
+      }
+      
+      .refresh-btn {
+          padding: 10px 20px;
+          background-color: #3498db;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+      }
+      
+      .refresh-btn:hover {
+          background-color: #2980b9;
+      }
+      
+      .letter-container {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          background-color: white;
+          border: 3px solid #4a90e2;
+          border-radius: 15px;
+          padding: 15px;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          opacity: 1;
+          transition: opacity 0.3s ease-in-out;
+      }
+      
+      .letter-container.fade-out {
+          opacity: 0;
+      }
+      
+      .upper-letter {
+          font-size: 48px;
+          font-weight: bold;
+          color: #2c5aa0;
+          margin-bottom: 5px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      
+      .middle-letter {
+          font-size: 48px;
+          font-weight: bold;
+          color: #e74c3c;
+          margin-bottom: 5px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      
+      .lower-letter {
+          font-size: 48px;
+          font-weight: bold;
+          color: #8e44ad;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      
+      .speed-display {
+          font-weight: bold;
+          color: #2c5aa0;
+          min-width: 30px;
+      }
+      
+      .hidden {
+          display: none;
+      }
+  </style>
+</head>
+<body>
+  <div class="controls">
+      <div class="mode-control">
+          <label>Режим:</label>
+          <div class="mode-toggle">
+              <button id="mode2Btn" class="mode-btn active">2 літери</button>
+              <button id="mode3Btn" class="mode-btn">3 літери</button>
+          </div>
+      </div>
+      <div class="speed-control">
+          <label>Швидкість:</label>
+          <input type="range" id="speedSlider" class="speed-slider" min="2" max="10" value="5" step="1">
+          <span id="speedDisplay" class="speed-display">5с</span>
+      </div>
+      <button id="playPauseBtn" class="play-pause-btn">Пауза</button>
+      <button class="refresh-btn" onclick="generateNewLetters()">Нові літери</button>
+  </div>
+  
+  <div id="letterContainer" class="letter-container">
+      <div id="upperLetter" class="upper-letter"></div>
+      <div id="middleLetter" class="middle-letter"></div>
+      <div id="lowerLetter" class="lower-letter hidden"></div>
+  </div>
+
+  <script>
+      // Вимовні літери українського алфавіту (без Ь, Ъ)
+      const ukrainianLetters = [
+          'А', 'Б', 'В', 'Г', 'Ґ', 'Д', 'Е', 'Є', 'Ж', 'З', 'И', 'І', 'Ї', 'Й',
+          'К', 'Л', 'М', 'Н', 'О', 'П', 'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч',
+          'Ш', 'Щ', 'Ю', 'Я'
+      ];
+      
+      // Літери для середнього рядка (режим 2 літери)
+      const middleLetters2Mode = ['О', 'Л', 'П', 'Х'];
+      
+      // Літери для нижнього рядка (режим 3 літери)
+      const lowerLetters3Mode = ['О', 'Л', 'П'];
+      
+      let isPlaying = true;
+      let intervalId = null;
+      let currentSpeed = 5;
+      let currentMode = 2; // 2 або 3 літери
+      
+      const speedSlider = document.getElementById('speedSlider');
+      const speedDisplay = document.getElementById('speedDisplay');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const mode2Btn = document.getElementById('mode2Btn');
+      const mode3Btn = document.getElementById('mode3Btn');
+      const upperLetter = document.getElementById('upperLetter');
+      const middleLetter = document.getElementById('middleLetter');
+      const lowerLetter = document.getElementById('lowerLetter');
+      const container = document.getElementById('letterContainer');
+      
+      function getRandomLetter(array) {
+          return array[Math.floor(Math.random() * array.length)];
+      }
+      
+      function getRandomPosition() {
+          const controlsHeight = 100; // висота панелі управління
+          const containerHeight = currentMode === 2 ? 120 : 180; // висота контейнера залежно від режиму
+          const maxX = window.innerWidth - 150; // враховуємо ширину контейнера
+          const maxY = window.innerHeight - containerHeight; // враховуємо висоту контейнера
+          
+          const x = Math.random() * Math.max(0, maxX);
+          const y = controlsHeight + Math.random() * Math.max(0, maxY - controlsHeight);
+          
+          return { x, y };
+      }
+      
+      function generateNewLetters() {
+          // Спочатку зникаємо
+          container.classList.add('fade-out');
+          
+          setTimeout(() => {
+              const upperLetterText = getRandomLetter(ukrainianLetters);
+              const position = getRandomPosition();
+              
+              // Встановлюємо верхню літеру
+              upperLetter.textContent = upperLetterText;
+              
+              if (currentMode === 2) {
+                  // Режим 2 літери
+                  const middleLetterText = getRandomLetter(middleLetters2Mode);
+                  middleLetter.textContent = middleLetterText;
+                  lowerLetter.classList.add('hidden');
+              } else {
+                  // Режим 3 літери
+                  const middleLetterText = getRandomLetter(middleLetters2Mode);
+                  const lowerLetterText = getRandomLetter(lowerLetters3Mode);
+                  middleLetter.textContent = middleLetterText;
+                  lowerLetter.textContent = lowerLetterText;
+                  lowerLetter.classList.remove('hidden');
+              }
+              
+              // Встановлюємо нову позицію
+              container.style.left = position.x + 'px';
+              container.style.top = position.y + 'px';
+              
+              // Через невеликий час з'являємося в новому місці
+              setTimeout(() => {
+                  container.classList.remove('fade-out');
+              }, 50);
+              
+          }, 300); // час зникання
+      }
+      
+      function startAutoMove() {
+          if (intervalId) {
+              clearInterval(intervalId);
+          }
+          
+          intervalId = setInterval(() => {
+              if (isPlaying) {
+                  generateNewLetters();
+              }
+          }, currentSpeed * 1000);
+      }
+      
+      function togglePlayPause() {
+          isPlaying = !isPlaying;
+          
+          if (isPlaying) {
+              playPauseBtn.textContent = 'Пауза';
+              playPauseBtn.classList.remove('paused');
+              startAutoMove();
+          } else {
+              playPauseBtn.textContent = 'Плей';
+              playPauseBtn.classList.add('paused');
+          }
+      }
+      
+      function updateSpeed() {
+          currentSpeed = parseInt(speedSlider.value);
+          speedDisplay.textContent = currentSpeed + 'с';
+          
+          if (isPlaying) {
+              startAutoMove();
+          }
+      }
+      
+      function setMode(mode) {
+          currentMode = mode;
+          
+          if (mode === 2) {
+              mode2Btn.classList.add('active');
+              mode3Btn.classList.remove('active');
+          } else {
+              mode2Btn.classList.remove('active');
+              mode3Btn.classList.add('active');
+          }
+          
+          generateNewLetters();
+      }
+      
+      // Обробники подій
+      speedSlider.addEventListener('input', updateSpeed);
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      mode2Btn.addEventListener('click', () => setMode(2));
+      mode3Btn.addEventListener('click', () => setMode(3));
+      
+      // Генеруємо початкові літери при завантаженні сторінки
+      window.addEventListener('load', () => {
+          generateNewLetters();
+          startAutoMove();
+      });
+      
+      // Оновлюємо позицію при зміні розміру вікна
+      window.addEventListener('resize', generateNewLetters);
+  </script>
+</body>
+</html>
